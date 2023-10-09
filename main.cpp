@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "matrix_utils.h"
+#include "csmatrix_utils.h"
 
 int main()
 {
