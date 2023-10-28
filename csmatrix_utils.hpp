@@ -57,15 +57,17 @@ extern "C"
 
         // -------------------------------------------------------------------
         // 初始化单位矩阵
-        inline void initIdentityMatrix4x4(Matrix *matrix)
+        inline Matrix initIdentityMatrix4x4()
         {
+            Matrix matrix;
             for (int i = 0; i < 4; i++)
             {
                 for (int j = 0; j < 4; j++)
                 {
-                    matrix->mat4[i][j] = (i == j) ? 1.0f : 0.0f;
+                    matrix.mat4[i][j] = (i == j) ? 1.0f : 0.0f;
                 }
             }
+            return matrix;
         }
 
         // 初始化vec3向量
@@ -195,27 +197,19 @@ extern "C"
         /// @param x X轴方向上的平移量
         /// @param y Y轴方向上的平移量
         /// @param z Z轴方向上的平移量
-        inline int translateMatrix(Matrix *matrix, float x, float y, float z)
+        inline Matrix translateMatrix(const Matrix &matrix, float x, float y, float z)
         {
-            if (matrix == nullptr)
-            {
-                printf("[%s:%i]translateMatrix() input is NULL!\n", __FILE__, __LINE__);
-                return GLMCS_false;
-            }
-            matrix->mat4[3][0] += x;
-            matrix->mat4[3][1] += y;
-            matrix->mat4[3][2] += z;
-            return GLMCS_ok;
+            Matrix result = matrix;
+            result.mat4[3][0] += x;
+            result.mat4[3][1] += y;
+            result.mat4[3][2] += z;
+            return result;
         }
 
         // 4x4矩阵乘法
-        static int matrixMultiply(Matrix *result, Matrix *matrix, float b[4][4])
+        static Matrix matrixMultiply(const Matrix &matrix, const float b[4][4])
         {
-            if (result == nullptr || matrix == nullptr)
-            {
-                printf("[%s:%i]matrixMultiply() input is NULL!\n", __FILE__, __LINE__);
-                return GLMCS_false;
-            }
+            Matrix result;
             float temp[4][4];
             for (int i = 0; i < 4; i++)
             {
@@ -224,7 +218,7 @@ extern "C"
                     temp[i][j] = 0.0f;
                     for (int k = 0; k < 4; k++)
                     {
-                        temp[i][j] += matrix->mat4[i][k] * b[k][j];
+                        temp[i][j] += matrix.mat4[i][k] * b[k][j];
                     }
                 }
             }
@@ -232,10 +226,10 @@ extern "C"
             {
                 for (int j = 0; j < 4; j++)
                 {
-                    result->mat4[i][j] = temp[i][j];
+                    result.mat4[i][j] = temp[i][j];
                 }
             }
-            return GLMCS_ok;
+            return result;
         }
 
         /// @brief 绕x/y/z轴旋转,旋转轴x,y,z有且只有一个为1
@@ -245,17 +239,18 @@ extern "C"
         /// @param y 旋转轴为y轴
         /// @param z 旋转轴为z轴
         /// @return
-        inline int rotate(float angle, Matrix *matrix, bool x, bool y, bool z)
+        inline Matrix rotate(float angle, const Matrix &matrix, bool x, bool y, bool z)
         {
+            Matrix result = matrix;
             // 不旋转
             if ((int)x + (int)y + (int)z != 1)
             {
                 fprintf(stderr, "[%s:%i] [rotate error] Not rotated, make sure that the specified axis of rotation x,y,z has and only one is 1!\n", __FILE__, __LINE__);
                 if ((int)x + (int)y + (int)z == 0)
                 {
-                    return GLMCS_not_rotate;
+                    return result; // 返回未旋转的矩阵
                 }
-                return GLMCS_false;
+                return result; // 返回原始矩阵
             }
             float radian = angle * M_PI / 180.0f;
             if (x == 1)
@@ -265,7 +260,7 @@ extern "C"
                     {0.0f, cosf(radian), sinf(radian), 0.0f},
                     {0.0f, -sinf(radian), cosf(radian), 0.0f},
                     {0.0f, 0.0f, 0.0f, 1.0f}};
-                matrixMultiply(matrix, matrix, rotationMatrix);
+                result = matrixMultiply(matrix, rotationMatrix);
             }
             else if (y == 1)
             {
@@ -274,7 +269,7 @@ extern "C"
                     {0.0f, 1.0f, 0.0f, 0.0f},
                     {sinf(radian), 0.0f, cosf(radian), 0.0f},
                     {0.0f, 0.0f, 0.0f, 1.0f}};
-                matrixMultiply(matrix, matrix, rotationMatrix);
+                result = matrixMultiply(matrix, rotationMatrix);
             }
             else if (z == 1)
             {
@@ -283,9 +278,9 @@ extern "C"
                     {-sinf(radian), cosf(radian), 0.0f, 0.0f},
                     {0.0f, 0.0f, 1.0f, 0.0f},
                     {0.0f, 0.0f, 0.0f, 1.0f}};
-                matrixMultiply(matrix, matrix, rotationMatrix);
+                result = matrixMultiply(matrix, rotationMatrix);
             }
-            return GLMCS_ok;
+            return result;
         }
 
         /// @brief 在给定的矩阵上进行缩放变换
@@ -293,19 +288,21 @@ extern "C"
         /// @param x X轴方向上的缩放因子
         /// @param y Y轴方向上的缩放因子
         /// @param z Z轴方向上的缩放因子
-        inline void scaleMatrix(Matrix *matrix, float x, float y, float z)
+        inline Matrix scaleMatrix(const Matrix &matrix, float x, float y, float z)
         {
-            matrix->mat4[0][0] *= x;
-            matrix->mat4[0][1] *= x;
-            matrix->mat4[0][2] *= x;
+            Matrix result = matrix;
+            result.mat4[0][0] *= x;
+            result.mat4[0][1] *= x;
+            result.mat4[0][2] *= x;
 
-            matrix->mat4[1][0] *= y;
-            matrix->mat4[1][1] *= y;
-            matrix->mat4[1][2] *= y;
+            result.mat4[1][0] *= y;
+            result.mat4[1][1] *= y;
+            result.mat4[1][2] *= y;
 
-            matrix->mat4[2][0] *= z;
-            matrix->mat4[2][1] *= z;
-            matrix->mat4[2][2] *= z;
+            result.mat4[2][0] *= z;
+            result.mat4[2][1] *= z;
+            result.mat4[2][2] *= z;
+            return result;
         }
 
         // 打印矩阵
