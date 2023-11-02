@@ -4,13 +4,15 @@
 /// @defgroup CS https://github.com/CSsaan/OpenGL_GLSL
 ///
 /// @brief The csmatrix_utils, which implements exactly and only the GLSL specification to the degree possible.
-/// The csmatrix_utils is a utility library written in C++ language, aiming to provide accurate and exclusive implementation of GLSL matrix operations to the best extent possible.
+/// The csmatrix_utils is a utility library written in C language, aiming to provide accurate and exclusive implementation of GLSL matrix operations to the best extent possible.
 ///
-/// glmCS::Matrix<float, 4, 4> mat4x4 = glmCS::initIdentityMatrix<float, 4>();
-/// mat4x4 = glmCS::scaleMatrix<float>(mat4x4, 1, 2, 3);
-/// mat4x4 = glmCS::translateMatrix<float>(mat4x4, 1, 2, 3);
-/// mat4x4 = glmCS::rotate(270, mat4x4, 1, 0, 0);
-/// glmCS::printMatrix<float, 4, 4>(&mat4x4);
+/// glmCS::initIdentityMatrix4x4(&modelMatrix);
+/// glmCS::Matrix lookmat4 = glmCS::lookAt(glmCS::vec3(0.0f, 0.0f, 3.0f),glmCS::vec3(0.0f, 0.0f, 0.0f) ,glmCS::vec3(0.0f, 1.0f, 0.0f));
+/// glmCS::Matrix persprctmat4 = glmCS::perspective(45.0f, 4.0f/3.0f, 0.01f, 100.0f);
+/// glmCS::translateMatrix(&modelMatrix, 0.825f, y_step, 0.0f);
+/// glmCS::scaleMatrix(&modelMatrix, 0.05f, 2.0f, 1.0f);
+/// glmCS::rotate(270, &modelMatrix, 0, 0, 1);
+/// glmCS::printMatrix(&modelMatrix);
 ///
 
 #ifndef __CSMATRIX_UTILS_H__
@@ -33,33 +35,34 @@ enum
     GLMCS_ok = 1
 };
 
-namespace glmCS
+#ifdef __cplusplus
+extern "C"
 {
-    // 定义一个 MxN 的二维矩阵结构
-    template <typename T, size_t rows, size_t cols>
-    struct Matrix
+#endif
+
+    // 定义一个 4x4 的矩阵结构
+    typedef struct
     {
-        T mat[rows][cols];
-    };
+        float mat3[3][3];
+        float mat4[4][4];
+    } Matrix;
 
     // 定义一个 vec3 的向量
-    typedef struct Vector3
+    typedef struct
     {
         float x, y, z;
     } Vector3;
 
     // -------------------------------------------------------------------
     // 初始化单位矩阵
-    template <typename T, size_t N>
-    inline Matrix<T, N, N> initIdentityMatrix()
+    inline Matrix initIdentityMatrix4x4()
     {
-        Matrix<T, N, N> matrix;
-        size_t i, j;
-        for (i = 0; i < N; i++)
+        Matrix matrix;
+        for (int i = 0; i < 4; i++)
         {
-            for (j = 0; j < N; j++)
+            for (int j = 0; j < 4; j++)
             {
-                matrix.mat[i][j] = (i == j) ? T(1) : T(0);
+                matrix.mat4[i][j] = (i == j) ? 1.0f : 0.0f;
             }
         }
         return matrix;
@@ -117,7 +120,7 @@ namespace glmCS
     /// @param target 目标位置的三维向量
     /// @param up 上方向的三维向量
     /// @return 返回一个观察矩阵
-    inline Matrix<float, 4, 4> lookAt(Vector3 eye, Vector3 target, Vector3 up)
+    inline Matrix lookAt(Vector3 eye, Vector3 target, Vector3 up)
     {
         Vector3 forward, right, upVec;
 
@@ -130,27 +133,27 @@ namespace glmCS
         cross(&upVec, &right, &forward);
         normalize(&upVec);
 
-        Matrix<float, 4, 4> Matrix4;
+        Matrix Matrix4;
 
-        Matrix4.mat[0][0] = right.x;
-        Matrix4.mat[0][1] = upVec.x;
-        Matrix4.mat[0][2] = -forward.x;
-        Matrix4.mat[0][3] = 0.0f;
+        Matrix4.mat4[0][0] = right.x;
+        Matrix4.mat4[0][1] = upVec.x;
+        Matrix4.mat4[0][2] = -forward.x;
+        Matrix4.mat4[0][3] = 0.0f;
 
-        Matrix4.mat[1][0] = right.y;
-        Matrix4.mat[1][1] = upVec.y;
-        Matrix4.mat[1][2] = -forward.y;
-        Matrix4.mat[1][3] = 0.0f;
+        Matrix4.mat4[1][0] = right.y;
+        Matrix4.mat4[1][1] = upVec.y;
+        Matrix4.mat4[1][2] = -forward.y;
+        Matrix4.mat4[1][3] = 0.0f;
 
-        Matrix4.mat[2][0] = right.z;
-        Matrix4.mat[2][1] = upVec.z;
-        Matrix4.mat[2][2] = -forward.z;
-        Matrix4.mat[2][3] = 0.0f;
+        Matrix4.mat4[2][0] = right.z;
+        Matrix4.mat4[2][1] = upVec.z;
+        Matrix4.mat4[2][2] = -forward.z;
+        Matrix4.mat4[2][3] = 0.0f;
 
-        Matrix4.mat[3][0] = -dot(&right, &eye);
-        Matrix4.mat[3][1] = -dot(&upVec, &eye);
-        Matrix4.mat[3][2] = dot(&forward, &eye);
-        Matrix4.mat[3][3] = 1.0f;
+        Matrix4.mat4[3][0] = -dot(&right, &eye);
+        Matrix4.mat4[3][1] = -dot(&upVec, &eye);
+        Matrix4.mat4[3][2] = dot(&forward, &eye);
+        Matrix4.mat4[3][3] = 1.0f;
         return Matrix4;
     }
 
@@ -160,30 +163,30 @@ namespace glmCS
     /// @param nearPlane 近平面距离
     /// @param farPlane 远平面距离
     /// @return 生成的透视投影矩阵
-    inline Matrix<float, 4, 4> perspective(float fov, float aspectRatio, float nearPlane, float farPlane)
+    inline Matrix perspective(float fov, float aspectRatio, float nearPlane, float farPlane)
     {
-        Matrix<float, 4, 4> Matrix4;
+        Matrix Matrix4;
         float f = 1.0f / tanf(fov * 0.5f);
 
-        Matrix4.mat[0][0] = f / aspectRatio;
-        Matrix4.mat[0][1] = 0.0f;
-        Matrix4.mat[0][2] = 0.0f;
-        Matrix4.mat[0][3] = 0.0f;
+        Matrix4.mat4[0][0] = f / aspectRatio;
+        Matrix4.mat4[0][1] = 0.0f;
+        Matrix4.mat4[0][2] = 0.0f;
+        Matrix4.mat4[0][3] = 0.0f;
 
-        Matrix4.mat[1][0] = 0.0f;
-        Matrix4.mat[1][1] = f;
-        Matrix4.mat[1][2] = 0.0f;
-        Matrix4.mat[1][3] = 0.0f;
+        Matrix4.mat4[1][0] = 0.0f;
+        Matrix4.mat4[1][1] = f;
+        Matrix4.mat4[1][2] = 0.0f;
+        Matrix4.mat4[1][3] = 0.0f;
 
-        Matrix4.mat[2][0] = 0.0f;
-        Matrix4.mat[2][1] = 0.0f;
-        Matrix4.mat[2][2] = (farPlane + nearPlane) / (nearPlane - farPlane);
-        Matrix4.mat[2][3] = -1.0f;
+        Matrix4.mat4[2][0] = 0.0f;
+        Matrix4.mat4[2][1] = 0.0f;
+        Matrix4.mat4[2][2] = (farPlane + nearPlane) / (nearPlane - farPlane);
+        Matrix4.mat4[2][3] = -1.0f;
 
-        Matrix4.mat[3][0] = 0.0f;
-        Matrix4.mat[3][1] = 0.0f;
-        Matrix4.mat[3][2] = (2.0f * farPlane * nearPlane) / (nearPlane - farPlane);
-        Matrix4.mat[3][3] = 0.0f;
+        Matrix4.mat4[3][0] = 0.0f;
+        Matrix4.mat4[3][1] = 0.0f;
+        Matrix4.mat4[3][2] = (2.0f * farPlane * nearPlane) / (nearPlane - farPlane);
+        Matrix4.mat4[3][3] = 0.0f;
         return Matrix4;
     }
 
@@ -192,39 +195,36 @@ namespace glmCS
     /// @param x X轴方向上的平移量
     /// @param y Y轴方向上的平移量
     /// @param z Z轴方向上的平移量
-    template <typename T>
-    inline Matrix<T, 4, 4> translateMatrix(const Matrix<T, 4, 4> &matrix, T x, T y, T z)
+    inline Matrix translateMatrix(const Matrix &matrix, float x, float y, float z)
     {
-        Matrix<T, 4, 4> result = matrix;
-        result.mat[3][0] += x;
-        result.mat[3][1] += y;
-        result.mat[3][2] += z;
+        Matrix result = matrix;
+        result.mat4[3][0] += x;
+        result.mat4[3][1] += y;
+        result.mat4[3][2] += z;
         return result;
     }
 
     // 4x4矩阵乘法
-    template <typename T, size_t rows, size_t cols>
-    Matrix<T, rows, cols> matrixMultiply(const Matrix<T, rows, cols> &matrix, const T b[cols][cols])
+    static Matrix matrixMultiply(const Matrix &matrix, const float b[4][4])
     {
-        Matrix<T, rows, cols> result;
-        T temp[rows][cols];
-        size_t i, j, k;
-        for (i = 0; i < rows; i++)
+        Matrix result;
+        float temp[4][4];
+        for (int i = 0; i < 4; i++)
         {
-            for (j = 0; j < cols; j++)
+            for (int j = 0; j < 4; j++)
             {
-                temp[i][j] = T(0);
-                for (k = 0; k < cols; k++)
+                temp[i][j] = 0.0f;
+                for (int k = 0; k < 4; k++)
                 {
-                    temp[i][j] += matrix.mat[i][k] * b[k][j];
+                    temp[i][j] += matrix.mat4[i][k] * b[k][j];
                 }
             }
         }
-        for (i = 0; i < rows; i++)
+        for (int i = 0; i < 4; i++)
         {
-            for (j = 0; j < cols; j++)
+            for (int j = 0; j < 4; j++)
             {
-                result.mat[i][j] = temp[i][j];
+                result.mat4[i][j] = temp[i][j];
             }
         }
         return result;
@@ -237,9 +237,9 @@ namespace glmCS
     /// @param y 旋转轴为y轴
     /// @param z 旋转轴为z轴
     /// @return
-    inline Matrix<float, 4, 4> rotate(float angle, const Matrix<float, 4, 4> &matrix, bool x, bool y, bool z)
+    inline Matrix rotate(float angle, const Matrix &matrix, bool x, bool y, bool z)
     {
-        Matrix<float, 4, 4> result = matrix;
+        Matrix result = matrix;
         // 不旋转
         if ((int)x + (int)y + (int)z != 1)
         {
@@ -286,39 +286,39 @@ namespace glmCS
     /// @param x X轴方向上的缩放因子
     /// @param y Y轴方向上的缩放因子
     /// @param z Z轴方向上的缩放因子
-    template <typename T>
-    inline Matrix<T, 4, 4> scaleMatrix(const Matrix<T, 4, 4> &matrix, T x, T y, T z)
+    inline Matrix scaleMatrix(const Matrix &matrix, float x, float y, float z)
     {
-        Matrix<T, 4, 4> result = matrix;
-        result.mat[0][0] *= x;
-        result.mat[0][1] *= x;
-        result.mat[0][2] *= x;
+        Matrix result = matrix;
+        result.mat4[0][0] *= x;
+        result.mat4[0][1] *= x;
+        result.mat4[0][2] *= x;
 
-        result.mat[1][0] *= y;
-        result.mat[1][1] *= y;
-        result.mat[1][2] *= y;
+        result.mat4[1][0] *= y;
+        result.mat4[1][1] *= y;
+        result.mat4[1][2] *= y;
 
-        result.mat[2][0] *= z;
-        result.mat[2][1] *= z;
-        result.mat[2][2] *= z;
+        result.mat4[2][0] *= z;
+        result.mat4[2][1] *= z;
+        result.mat4[2][2] *= z;
         return result;
     }
 
     // 打印矩阵
-    template <typename T, size_t rows, size_t cols>
-    inline void printMatrix(const Matrix<T, rows, cols> *matrix)
+    inline void printMatrix(const Matrix *matrix)
     {
-        size_t i, j;
-        for (i = 0; i < rows; i++)
+        for (int i = 0; i < 4; i++)
         {
-            for (j = 0; j < cols; j++)
+            for (int j = 0; j < 4; j++)
             {
-                printf("%.2f\t", matrix->mat[i][j]);
+                printf("%.2f\t", matrix->mat4[i][j]);
             }
             printf("\n");
         }
         printf("\n");
     }
-} // namespace glmCS
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // __CSMATRIX_UTILS_H__
