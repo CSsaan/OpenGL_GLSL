@@ -6,13 +6,13 @@
 /// @brief The csmatrix_utils, which implements exactly and only the GLSL specification to the degree possible.
 /// The csmatrix_utils is a utility library written in C language, aiming to provide accurate and exclusive implementation of GLSL matrix operations to the best extent possible.
 ///
-/// glmCS::initIdentityMatrix4x4(&modelMatrix);
-/// glmCS::Matrix lookmat4 = glmCS::lookAt(glmCS::vec3(0.0f, 0.0f, 3.0f),glmCS::vec3(0.0f, 0.0f, 0.0f) ,glmCS::vec3(0.0f, 1.0f, 0.0f));
-/// glmCS::Matrix persprctmat4 = glmCS::perspective(45.0f, 4.0f/3.0f, 0.01f, 100.0f);
-/// glmCS::translateMatrix(&modelMatrix, 0.825f, y_step, 0.0f);
-/// glmCS::scaleMatrix(&modelMatrix, 0.05f, 2.0f, 1.0f);
-/// glmCS::rotate(270, &modelMatrix, 0, 0, 1);
-/// glmCS::printMatrix(&modelMatrix);
+/// initIdentityMatrix4x4(&modelMatrix);
+/// Matrix lookmat4 = lookAt(vec3(0.0f, 0.0f, 3.0f),vec3(0.0f, 0.0f, 0.0f) ,vec3(0.0f, 1.0f, 0.0f));
+/// Matrix persprctmat4 = perspective(45.0f, 4.0f/3.0f, 0.01f, 100.0f);
+/// translateMatrix(&modelMatrix, 0.825f, y_step, 0.0f);
+/// scaleMatrix(&modelMatrix, 0.05f, 2.0f, 1.0f);
+/// rotate(270, &modelMatrix, 0, 0, 1);
+/// printMatrix(&modelMatrix);
 ///
 
 #ifndef __CSMATRIX_UTILS_H__
